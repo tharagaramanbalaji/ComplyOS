@@ -1,0 +1,10 @@
+venv/
+__pycache__/
+*.pyc
+.env
+xml_invoices_test/
+xml_invoices_train/
+rule_mappings_train.json
+validation_labels_train.json
+rules_train.txt
+rules_test.txt

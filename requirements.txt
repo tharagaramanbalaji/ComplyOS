@@ -1,0 +1,9 @@
+
+lxml==5.1.0            # Robust XML parsing and XPath extraction
+pydantic==2.6.1        # Strict JSON schema validation for the Intermediate Representation (IR)
+sentence-transformers==2.3.1  # Lightweight NLP for mapping English rules to IR
+spacy==3.7.4                  # Grammar extraction and NLP entity matching
+fastapi==0.109.2       # REST API framework
+uvicorn==0.27.1        # ASGI server to run FastAPI
+python-multipart==0.0.9 # Required by FastAPI for handling XML file uploads
+pytest==8.0.0          # Testing framework to evaluate our validation engine accuracy
