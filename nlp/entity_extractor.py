@@ -11,21 +11,46 @@ except OSError:
 
 def extract_operator(text: str) -> str:
     """
-    Deterministically maps fuzzy English phrases to strict mathematical operators.
-    This replaces unpredictable LLM logic with rock-solid NLP.
+    Exhaustive deterministic mapping of mathematical and natural language comparison operators.
+    Covers standard symbols, financial terminology, and logical bounds.
     """
-    text = text.lower()
-    if "greater than or equal" in text or ">=" in text:
+    text = f" {text.lower()} "
+    
+    # 1. Inequality / Strict Bounds
+    if any(p in text for p in [" not equal ", " != ", " differs from ", " cannot equal "]):
+        return "!="
+    elif any(p in text for p in [" greater than or equal ", " >= ", " at least ", " minimum ", " not less than "]):
         return ">="
-    elif "less than or equal" in text or "<=" in text:
+    elif any(p in text for p in [" less than or equal ", " <= ", " at most ", " maximum ", " not greater than ", " up to "]):
         return "<="
-    elif "greater than" in text or ">" in text or "over" in text:
+    elif any(p in text for p in [" greater than ", " > ", " over ", " exceeds ", " higher than ", " more than "]):
         return ">"
-    elif "less than" in text or "<" in text or "under" in text:
+    elif any(p in text for p in [" less than ", " < ", " under ", " below ", " lower than ", " smaller than "]):
         return "<"
-    elif "equal" in text or "exactly" in text or "match" in text or "==" in text:
+    elif any(p in text for p in [" equal ", " exactly ", " match ", " == ", " equals ", " identical to ", " same as "]):
         return "=="
-    return "=="  # default fallback
+    
+    # 2. Financial / Domain Specific Fallbacks
+    if " positive " in text or " > 0 " in text:
+        return ">="
+    elif " negative " in text or " < 0 " in text:
+        return "<"
+    
+    return "=="  # Standard fallback
+
+def parse_financial_number(token_text: str) -> float:
+    """
+    Robust financial number parser handling currency symbols, comma separators, and scale suffixes (k, m).
+    """
+    clean = re.sub(r"[€$£¥,\s]", "", token_text.lower())
+    if clean.endswith("k"):
+        try: return float(clean[:-1]) * 1000.0
+        except ValueError: pass
+    elif clean.endswith("m"):
+        try: return float(clean[:-1]) * 1000000.0
+        except ValueError: pass
+    try: return float(clean)
+    except ValueError: return None
 
 def extract_grammar_entities(rule_text: str) -> dict:
     """
@@ -36,6 +61,7 @@ def extract_grammar_entities(rule_text: str) -> dict:
         raise RuntimeError("spaCy is not loaded. Please ensure the model is installed.")
         
     doc = nlp(rule_text)
+    lower_text = rule_text.lower()
     
     extracted = {
         "raw_text": rule_text,
@@ -45,51 +71,62 @@ def extract_grammar_entities(rule_text: str) -> dict:
         "intent": "unknown"
     }
     
-    # 1. Extract Noun Chunks (These are our potential JSON field names)
-    # E.g., "The total payable amount" -> we extract this to send to Sentence Transformers later
+    # 1. Noun Chunk Extraction (Cleaning determiner stop words and punctuation)
     for chunk in doc.noun_chunks:
-        # Clean up the subject by removing stop words like "The" or "A"
-        clean_subject = " ".join([token.text for token in chunk if not token.is_stop])
-        if clean_subject.strip():
-            extracted["subjects"].append(clean_subject.lower())
+        clean_tokens = [t.text for t in chunk if not t.is_stop and not t.is_punct and t.pos_ in {"NOUN", "PROPN", "ADJ"}]
+        clean_subj = " ".join(clean_tokens).strip()
+        if clean_subj and len(clean_subj) > 1:
+            extracted["subjects"].append(clean_subj.lower())
             
-    # 2. Extract Numbers (These are our target values for comparison)
-    for token in doc:
-        if token.like_num or re.match(r"^\d+(\.\d+)?$", token.text):
-            try:
-                extracted["numbers"].append(float(token.text))
-            except ValueError:
-                pass
-                
-    # 3. Detect the broad "Intent" of the rule deterministically
-    lower_text = rule_text.lower()
-    if "if" in lower_text and "then" in lower_text:
+    # 2. Robust Financial Number Extraction
+    # Scan raw regex first for formatted currency strings like "$500,000.00" or "50k"
+    matches = re.findall(r"\b\d+(?:,\d{3})*(?:\.\d+)?(?:[kmKM])?\b", rule_text)
+    for m in matches:
+        val = parse_financial_number(m)
+        if val is not None and val not in extracted["numbers"]:
+            extracted["numbers"].append(val)
+            
+    # Also check spaCy tokens as backup
+    if not extracted["numbers"]:
+        for token in doc:
+            if token.like_num:
+                try:
+                    num = float(token.text)
+                    if num not in extracted["numbers"]: extracted["numbers"].append(num)
+                except ValueError: pass
+
+    # 3. Comprehensive Domain Intent Mapping
+    if "if" in lower_text and any(w in lower_text for w in ["then", "must", "required"]):
         extracted["intent"] = "conditional_check"
-    elif "required" in lower_text or "must be present" in lower_text or "missing" in lower_text:
-        extracted["intent"] = "required_check"
-    elif "sum" in lower_text or "total" in lower_text or "calculated" in lower_text:
-        extracted["intent"] = "calculation_check"
-    elif "date" in lower_text and ("future" in lower_text or "past" in lower_text or "before" in lower_text or "after" in lower_text):
-        extracted["intent"] = "date_validation"
-    elif "currency" in lower_text and ("match" in lower_text or "consistent" in lower_text or "same" in lower_text):
-        extracted["intent"] = "currency_consistency"
-    elif "tax category" in lower_text and ("valid" in lower_text or "allowed" in lower_text or "code" in lower_text):
-        extracted["intent"] = "tax_category_validation"
-    elif "duplicate" in lower_text or "unique" in lower_text or "already exists" in lower_text:
-        extracted["intent"] = "duplicate_check"
     elif extracted["numbers"] and extracted["operator"]:
         extracted["intent"] = "numeric_comparison"
+    elif any(w in lower_text for w in ["required", "must be present", "missing", "mandatory", "cannot be empty"]):
+        extracted["intent"] = "required_check"
+    elif any(w in lower_text for w in ["sum", "total", "calculated", "plus", "+", "added", "subtotal", "aggregation"]):
+        extracted["intent"] = "calculation_check"
+    elif any(w in lower_text for w in ["tax category", "tax_category", "vat category", "vat code", "tax code"]):
+        extracted["intent"] = "tax_category_validation"
+    elif any(w in lower_text for w in ["currency", "eur", "usd", "gbp", "jpy", "currency_code"]):
+        extracted["intent"] = "currency_consistency"
+    elif any(w in lower_text for w in ["date", "today", "issue_date", "due_date", "current_date", "timestamp"]):
+        extracted["intent"] = "date_validation"
+    elif any(w in lower_text for w in ["duplicate", "unique", "already exists", "re-submission", "resubmission"]):
+        extracted["intent"] = "duplicate_check"
         
     return extracted
 
 if __name__ == "__main__":
     # Let's run a quick internal test if you run this script directly!
-    sample_rule = "The total payable amount must be greater than or equal to 0"
-    print(f"Testing NLP on: '{sample_rule}'\n")
-    
-    try:
-        results = extract_grammar_entities(sample_rule)
-        for key, val in results.items():
-            print(f"{key.upper()}: {val}")
-    except Exception as e:
-        print(f"Error: {e}")
+    sample_rules = [
+        "The total payable amount must be at least $50,000.00",
+        "Every invoice ID must be mandatory",
+        "Tax amount cannot exceed 50k"
+    ]
+    print("--- TESTING UPGRADED ENTITY EXTRACTOR ---\n")
+    for rule in sample_rules:
+        print(f"Rule: '{rule}'")
+        res = extract_grammar_entities(rule)
+        print(f"  Operator : {res['operator']}")
+        print(f"  Numbers  : {res['numbers']}")
+        print(f"  Subjects : {res['subjects']}")
+        print(f"  Intent   : {res['intent']}\n")

@@ -102,3 +102,23 @@ async def magic_validation(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# --- COPILOT MULTI-TURN CONVERSATIONAL ENDPOINT ---
+
+from api.schemas.api_schemas import ChatTurnRequest, ChatTurnResponse
+from nlp.conversational_agent import ConversationalCopilot
+
+COPILOT = ConversationalCopilot()
+
+@router.post("/chat/turn", response_model=ChatTurnResponse)
+async def chat_turn(request: ChatTurnRequest):
+    try:
+        res = COPILOT.process_turn(
+            session_id=request.session_id,
+            user_message=request.user_message,
+            user_choice=request.user_choice,
+            action=request.action
+        )
+        return ChatTurnResponse(**res)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
