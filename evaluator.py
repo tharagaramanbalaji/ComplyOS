@@ -27,19 +27,29 @@ def run_evaluation():
     print(f"Applying XSLT against {len(xml_files)} XML invoices. Please wait...")
     
     # Step 2: Run every invoice against every compiled XSLT rule
+    from lxml import etree
+    duplicate_cache = set()
+    
     for xml_path in xml_files:
         inv_id = os.path.basename(xml_path).replace(".xml", "")
-        with open(xml_path, "r") as f:
+        with open(xml_path, "r", encoding="utf-8") as f:
             xml_content = f.read()
             
         expected_labels = ground_truth.get(inv_id, {})
         
+        # Track duplicates across invoices
+        try:
+            doc = etree.fromstring(xml_content.encode("utf-8"))
+            inv_nodes = doc.xpath("//Invoice/invoice_id | //*[local-name()='invoice_id']")
+            current_id = inv_nodes[0].text if (inv_nodes and inv_nodes[0].text) else None
+        except Exception:
+            current_id = None
+            
+        is_duplicate = (current_id in duplicate_cache) if current_id else False
+        if current_id:
+            duplicate_cache.add(current_id)
+        
         for rule_id, xslt_content in compiled_rules.items():
-            # XSLT evaluates a single document, so it cannot inherently check cross-document 
-            # uniqueness (duplicate_field_check) without a database. We skip that rule for this metric.
-            if rules[rule_id].get("rule_type") == "duplicate_field_check":
-                continue
-                
             expected = expected_labels.get(rule_id)
             if not expected:
                 continue
@@ -47,12 +57,16 @@ def run_evaluation():
             # Execute the auto-generated XSLT script
             result = execute_xslt(xml_content, xslt_content)
             
+            # Python-level duplicate override
+            if rules[rule_id].get("rule_type") == "duplicate_field_check":
+                if current_id:
+                    result = "FAIL" if is_duplicate else "PASS"
+                else:
+                    result = "FAIL"
+            
             total_checks += 1
             if result == expected:
                 correct_checks += 1
-            else:
-                pass
-                # Optional: print(f"Mismatch on {inv_id} - {rule_id}. Expected {expected}, got {result}")
                 
     accuracy = (correct_checks / total_checks) * 100 if total_checks > 0 else 0
     

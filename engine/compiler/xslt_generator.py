@@ -25,9 +25,9 @@ def compile_rule_to_xslt(rule_ir: dict) -> str:
         test_condition = f"string-length({xpath}) &gt; 0"
         
     elif r_type == "conditional_required_field":
-        cond_field = field_to_xpath(rule_ir["condition"]["field"])
-        cond_val = rule_ir["condition"]["value"]
-        act_field = field_to_xpath(rule_ir["action"]["field"])
+        cond_field = field_to_xpath(rule_ir.get("condition_field", ""))
+        cond_val = rule_ir.get("condition_value", "")
+        act_field = field_to_xpath(rule_ir.get("field", ""))
         # If condition is not met, PASS. If met, check action field exists
         test_condition = f"not({cond_field} = '{cond_val}') or string-length({act_field}) &gt; 0"
         

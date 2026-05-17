@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 import spacy
 import re
 
@@ -62,10 +63,20 @@ def extract_grammar_entities(rule_text: str) -> dict:
                 
     # 3. Detect the broad "Intent" of the rule deterministically
     lower_text = rule_text.lower()
-    if "required" in lower_text or "must be present" in lower_text or "missing" in lower_text:
+    if "if" in lower_text and "then" in lower_text:
+        extracted["intent"] = "conditional_check"
+    elif "required" in lower_text or "must be present" in lower_text or "missing" in lower_text:
         extracted["intent"] = "required_check"
     elif "sum" in lower_text or "total" in lower_text or "calculated" in lower_text:
         extracted["intent"] = "calculation_check"
+    elif "date" in lower_text and ("future" in lower_text or "past" in lower_text or "before" in lower_text or "after" in lower_text):
+        extracted["intent"] = "date_validation"
+    elif "currency" in lower_text and ("match" in lower_text or "consistent" in lower_text or "same" in lower_text):
+        extracted["intent"] = "currency_consistency"
+    elif "tax category" in lower_text and ("valid" in lower_text or "allowed" in lower_text or "code" in lower_text):
+        extracted["intent"] = "tax_category_validation"
+    elif "duplicate" in lower_text or "unique" in lower_text or "already exists" in lower_text:
+        extracted["intent"] = "duplicate_check"
     elif extracted["numbers"] and extracted["operator"]:
         extracted["intent"] = "numeric_comparison"
         

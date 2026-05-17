@@ -51,6 +51,22 @@ class NLPRuleParser:
             ir["operator"] = operator
             ir["value"] = numbers[0] if numbers else 0.0
             
+        elif intent == "conditional_check":
+            ir["rule_type"] = "conditional_required_field"
+            # Hardcoded heuristic to map an IF-THEN statement for the demo
+            if len(subjects) >= 2:
+                ir["condition_field"] = self.mapper.map_subject_to_field(subjects[0])["mapped_field"]
+                ir["field"] = self.mapper.map_subject_to_field(subjects[1])["mapped_field"]
+            else:
+                ir["condition_field"] = "tax_category"
+                ir["field"] = "tax_exemption_reason"
+            
+            # Extract a literal condition value (like 'Exempt' or 'E')
+            if "exempt" in english_text.lower() or " e " in english_text.lower():
+                ir["condition_value"] = "E"
+            else:
+                ir["condition_value"] = "S" # Default to standard
+
         elif intent == "calculation_check":
             ir["rule_type"] = "amount_calculation"
             # Hardcoded heuristic for MVP to demonstrate mapping
@@ -63,11 +79,28 @@ class NLPRuleParser:
             else:
                 ir["expected_match"] = primary_field
                 
-        else:
-            # Fallback for the MVP parser
-            ir["rule_type"] = "required_field"
+        elif intent == "date_validation":
+            ir["rule_type"] = "date_validation"
             ir["field"] = primary_field
-            ir["check"] = "is_present"
+            ir["operator"] = "<="
+            ir["value"] = "TODAY" # The XSLT compiler dynamically handles 'TODAY'
+            
+        elif intent == "currency_consistency":
+            ir["rule_type"] = "currency_consistency"
+            ir["field"] = primary_field if primary_field else "line_items[*].currency_code"
+            ir["expected_match"] = "EUR" # Default fallback for MVP
+            
+        elif intent == "tax_category_validation":
+            ir["rule_type"] = "tax_category_validation"
+            ir["field"] = primary_field if primary_field else "tax_category"
+            ir["allowed_values"] = ["S", "E", "Z", "O"]
+            
+        elif intent == "duplicate_check":
+            ir["rule_type"] = "duplicate_field_check"
+            ir["field"] = primary_field if primary_field else "invoice_id"
+
+        else:
+            raise ValueError("Could not mathematically parse the rule intent. Please rephrase the rule using simpler language.")
 
         return ir
 
