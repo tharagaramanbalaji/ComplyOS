@@ -41,5 +41,5 @@ COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 EXPOSE 8000
 ENV PORT=8000
 
-# Run Uvicorn multi-worker production server
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+# Run Uvicorn multi-worker production server binding to Render's dynamic $PORT
+CMD uvicorn api.main:app --host 0.0.0.0 --port $PORT --workers 4
