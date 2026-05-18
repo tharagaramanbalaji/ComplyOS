@@ -1,0 +1,2 @@
+NLP PARSER & XSLT GENERATOR ACCURACY REPORT
+Accuracy Summary: 15/15 (100.0%) successfully parsed into IR.
