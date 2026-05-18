@@ -20,7 +20,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    print("🚀 Booting up ComplyOS Backend...")
+    print("[ComplyOS] Booting up backend...")
     # Pre-load the AI models so the very first API request doesn't lag the frontend
     get_parser()
 

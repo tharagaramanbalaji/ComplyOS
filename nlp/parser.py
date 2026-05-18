@@ -52,12 +52,14 @@ class NLPRuleParser:
             ir["rule_type"] = "required_field"
             ir["field"] = primary_field if primary_field else "invoice_id"
             ir["check"] = "is_present"
+            ir["_field_confidence"] = best_conf
             
         elif intent == "numeric_comparison":
             ir["rule_type"] = "numeric_comparison"
             ir["field"] = primary_field if primary_field else "taxable_amount"
             ir["operator"] = operator
             ir["value"] = numbers[0] if numbers else 0.0
+            ir["_field_confidence"] = best_conf
             
         elif intent == "conditional_check":
             ir["rule_type"] = "conditional_required_field"
@@ -111,6 +113,7 @@ class NLPRuleParser:
             ir["field"] = primary_field if primary_field else "due_date"
             ir["operator"] = "<="
             ir["value"] = "CURRENT_DATE"
+            ir["_field_confidence"] = best_conf
             
         elif intent == "currency_consistency":
             ir["rule_type"] = "currency_consistency"
