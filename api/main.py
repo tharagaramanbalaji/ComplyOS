@@ -24,9 +24,20 @@ async def startup_event():
     # Pre-load the AI models so the very first API request doesn't lag the frontend
     get_parser()
 
+import os
+from fastapi.staticfiles import StaticFiles
+
 # Include the endpoints
 app.include_router(magic.router, prefix="/api/validate", tags=["Validation Engine"])
 
-@app.get("/")
+@app.get("/health")
 def health_check():
     return {"status": "online", "message": "ComplyOS Engine is actively listening."}
+
+# Mount React static files if built (Production deployment)
+if os.path.exists("frontend/dist"):
+    app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="frontend")
+else:
+    @app.get("/")
+    def root_fallback():
+        return {"status": "online", "message": "ComplyOS API is running (Frontend static assets not built)."}

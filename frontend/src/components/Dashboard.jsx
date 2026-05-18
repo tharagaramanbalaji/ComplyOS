@@ -10,6 +10,8 @@ const Dashboard = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [loadingChat, setLoadingChat] = useState(false);
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace(/\/$/, "") : 'http://localhost:8000';
+
   // Cart & Compiler State
   const [cart, setCart] = useState([]);
   const [xsltCode, setXsltCode] = useState(null);
@@ -39,7 +41,7 @@ const Dashboard = () => {
     setLoadingChat(true);
 
     try {
-      const res = await fetch('http://localhost:8000/api/validate/chat/turn', {
+      const res = await fetch(`${API_BASE_URL}/api/validate/chat/turn`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_id: sessionId, user_message: userMsg })
@@ -74,7 +76,7 @@ const Dashboard = () => {
     setLoadingChat(true);
 
     try {
-      const res = await fetch('http://localhost:8000/api/validate/chat/turn', {
+      const res = await fetch(`${API_BASE_URL}/api/validate/chat/turn`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -105,7 +107,7 @@ const Dashboard = () => {
   const handleClearCart = async () => {
     setLoadingChat(true);
     try {
-      const res = await fetch('http://localhost:8000/api/validate/chat/turn', {
+      const res = await fetch(`${API_BASE_URL}/api/validate/chat/turn`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_id: sessionId, action: 'clear_cart' })
@@ -154,7 +156,7 @@ const Dashboard = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/validate/execute', {
+      const response = await fetch(`${API_BASE_URL}/api/validate/execute`, {
         method: 'POST',
         body: formData,
       });
