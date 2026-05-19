@@ -1,3 +1,12 @@
+---
+title: ComplyOS
+emoji: 🏛️
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+---
+
 # 🏛️ ComplyOS: Natural Language Rule Engine for XML Invoice Validation
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)

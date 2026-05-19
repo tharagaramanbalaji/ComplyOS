@@ -40,9 +40,9 @@ COPY . .
 # Copy compiled static frontend UI from Stage 1 into backend directory
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 
-# Expose Render default port
-EXPOSE 10000
-ENV PORT=10000
+# Expose default port
+EXPOSE 7860
+ENV PORT=7860
 
-# Run Uvicorn single-worker server optimized for Render Free Tier
-CMD uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-10000}
+# Run Uvicorn server
+CMD uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-7860}
