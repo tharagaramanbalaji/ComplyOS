@@ -14,6 +14,5 @@ jobs:
         uses: huggingface/hub-sync@v0.1.0
         with:
           github_repo_id: ${{ github.repository }}
-          # Replace tharagaramanbalaji/complyos with your actual HF username and space name!
-          huggingface_repo_id: tharagaramanbalaji/complyos
+          huggingface_repo_id: Tharagaraman/ComplyOS
           hf_token: ${{ secrets.HF_TOKEN }}
