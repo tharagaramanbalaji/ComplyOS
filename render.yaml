@@ -1,6 +1,7 @@
 services:
+  # 1. Python Backend Web Service
   - type: web
-    name: complyos-compliance-engine
+    name: complyos-backend
     env: docker
     plan: starter
     region: oregon
@@ -8,3 +9,14 @@ services:
     envVars:
       - key: PORT
         value: 10000
+
+  # 2. React Frontend Static Site
+  - type: web
+    name: complyos-frontend
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        # Replace with your actual backend URL once deployed on Render
+        value: https://complyos-backend.onrender.com

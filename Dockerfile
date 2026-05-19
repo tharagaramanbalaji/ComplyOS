@@ -1,17 +1,5 @@
 # ==========================================
-# STAGE 1: Build React Frontend UI
-# ==========================================
-FROM node:20-alpine AS frontend-builder
-WORKDIR /app/frontend
-
-COPY frontend/package*.json ./
-RUN npm install
-
-COPY frontend/ ./
-RUN npm run build
-
-# ==========================================
-# STAGE 2: Python Backend & AI Engine Runtime
+# Python Backend & AI Engine Runtime
 # ==========================================
 FROM python:3.11-slim
 WORKDIR /app
@@ -33,9 +21,6 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 
 # Copy full application codebase
 COPY . .
-
-# Copy compiled static frontend UI from Stage 1 into backend directory
-COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 
 # Expose Render default port
 EXPOSE 10000
