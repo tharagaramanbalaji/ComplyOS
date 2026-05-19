@@ -24,6 +24,10 @@
   padding: 0;
 }
 
+html {
+  background-color: #f8fafc;
+}
+
 body {
   font-family: var(--font-family);
   background-color: var(--bg-body);
@@ -35,7 +39,7 @@ body {
 /* Layout */
 .app-container {
   display: flex;
-  min-height: 100vh;
+  min-height: 125vh;
 }
 
 /* Sidebar */
@@ -96,7 +100,7 @@ body {
   flex-direction: column;
   gap: 24px;
   overflow-y: auto;
-  max-height: 100vh;
+  max-height: 125vh;
 }
 
 .header {
