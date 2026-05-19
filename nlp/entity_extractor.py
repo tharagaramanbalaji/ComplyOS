@@ -57,10 +57,11 @@ def extract_grammar_entities(rule_text: str) -> dict:
     Uses spaCy to break down the grammar of an English rule.
     Extracts subjects (nouns), math values (numbers), and overall intent.
     """
-    if not nlp:
+    nlp_model = get_spacy_nlp()
+    if not nlp_model:
         raise RuntimeError("spaCy is not loaded. Please ensure the model is installed.")
         
-    doc = nlp(rule_text)
+    doc = nlp_model(rule_text)
     lower_text = rule_text.lower()
     
     extracted = {

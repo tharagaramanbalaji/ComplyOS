@@ -1,8 +1,23 @@
 # ==========================================
-# Python Backend & AI Engine Runtime
+# STAGE 1: Build React Frontend UI
+# ==========================================
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app/frontend
+
+COPY frontend/package*.json ./
+RUN npm install
+
+COPY frontend/ ./
+RUN npm run build
+
+# ==========================================
+# STAGE 2: Python Backend & AI Engine Runtime
 # ==========================================
 FROM python:3.11-slim
 WORKDIR /app
+
+# Ensure Python logs are output instantly in Render
+ENV PYTHONUNBUFFERED=1
 
 # Install system libraries needed for high-speed C-binding lxml execution
 RUN apt-get update && apt-get install -y \
@@ -21,6 +36,9 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 
 # Copy full application codebase
 COPY . .
+
+# Copy compiled static frontend UI from Stage 1 into backend directory
+COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 
 # Expose Render default port
 EXPOSE 10000

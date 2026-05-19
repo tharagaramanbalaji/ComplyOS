@@ -1,11 +1,11 @@
-from sentence_transformers import SentenceTransformer, util
-import torch
-
 class SemanticMapper:
     def __init__(self):
+        global SentenceTransformer, util, torch
         # We use a real, lightweight HuggingFace transformer model.
         # It runs locally on your machine, proving no fake data is used.
         print("Loading Sentence Transformer model (all-MiniLM-L6-v2)...")
+        from sentence_transformers import SentenceTransformer, util
+        import torch
         self.model = SentenceTransformer('all-MiniLM-L6-v2')
         
         # These are the exact rigid JSON fields our Validation Engine expects
