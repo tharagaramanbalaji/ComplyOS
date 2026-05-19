@@ -30,8 +30,9 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Pre-download spaCy weights into container cache
+# Pre-download spaCy & Sentence Transformers weights into container cache
 RUN python -m spacy download en_core_web_sm
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 
 # Copy full application codebase
 COPY . .
