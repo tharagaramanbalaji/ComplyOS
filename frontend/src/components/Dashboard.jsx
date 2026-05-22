@@ -21,6 +21,7 @@ const Dashboard = () => {
   const [validationStatus, setValidationStatus] = useState(null);
   const [loadingExecute, setLoadingExecute] = useState(false);
   const [extractedData, setExtractedData] = useState(null);
+  const [exportFormat, setExportFormat] = useState('xslt');
 
   const messagesEndRef = useRef(null);
   const scrollToBottom = () => {
@@ -172,11 +173,57 @@ const Dashboard = () => {
 
   const handleExportXSLT = () => {
     if (!xsltCode) return;
-    const blob = new Blob([xsltCode], { type: 'application/xml' });
+    let mimeType = 'application/xml';
+    if (exportFormat === 'txt') {
+      mimeType = 'text/plain';
+    }
+    const blob = new Blob([xsltCode], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `complyos_master_bundle_${Date.now()}.xslt`;
+    a.download = `complyos_master_bundle_${Date.now()}.${exportFormat}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportJSON = () => {
+    if (cart.length === 0) return;
+    const blob = new Blob([JSON.stringify(cart, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `complyos_rule_cart_${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportReport = () => {
+    if (!validationStatus) return;
+    const reportData = {
+      timestamp: new Date().toISOString(),
+      session_id: sessionId,
+      invoice_name: file ? file.name : "unknown_invoice",
+      overall_status: bannerStatus,
+      rules_count: cart.length,
+      rules_cart: cart,
+      trace_logs: [
+        "1. Rules Loaded: " + cart.length + " Active Rules in Compliance Bundle",
+        "2. Master XSLT 1.0 Document Compiled with Granular Tracing",
+        "3. XML Evaluated via lxml Engine (< 15ms)",
+        extractedData ? `↳ Sample Extracted Data: <${extractedData.field}> = ${extractedData.value}` : null,
+      ].filter(Boolean),
+      rule_breakdowns: ruleBreakdowns
+    };
+
+    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `complyos_validation_report_${Date.now()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -312,9 +359,22 @@ const Dashboard = () => {
         {/* RIGHT COLUMN: ACCUMULATED IR CART & COMPILED XSLT */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div className="card" style={{ height: '310px', display: 'flex', flexDirection: 'column', padding: 0 }}>
-            <div className="card-header" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
-              <span style={{ fontWeight: 600 }}>2. Bundle Rule Cart (JSON IR)</span>
-              <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500 }}>{cart.length} active rules</span>
+            <div className="card-header" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span style={{ fontWeight: 600 }}>2. Bundle Rule Cart (JSON IR)</span>
+                <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500, marginLeft: '8px' }}>{cart.length} active rules</span>
+              </div>
+              {cart.length > 0 && (
+                <button
+                  onClick={handleExportJSON}
+                  style={{ backgroundColor: '#eff6ff', border: '1px solid #3b82f6', color: '#1e40af', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                  onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#3b82f6'; e.currentTarget.style.color = '#fff'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#eff6ff'; e.currentTarget.style.color = '#1e40af'; }}
+                  title="Download Rule Cart JSON"
+                >
+                  <Download size={14} /> Export JSON
+                </button>
+              )}
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 0, margin: 0, backgroundColor: '#1e293b', color: '#f8fafc' }}>
               <pre style={{ border: 'none', borderRadius: 0, margin: 0, padding: '16px', fontSize: '13px', height: '100%', backgroundColor: 'transparent', color: 'inherit' }}>
@@ -327,15 +387,35 @@ const Dashboard = () => {
             <div className="card-header" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontWeight: 600 }}>3. Unified Master XSLT Bundle</span>
               {xsltCode && (
-                <button 
-                  onClick={handleExportXSLT} 
-                  style={{ backgroundColor: '#f0fdf4', border: '1px solid #22c55e', color: '#166534', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
-                  onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#22c55e'; e.currentTarget.style.color = '#fff'; }}
-                  onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#f0fdf4'; e.currentTarget.style.color = '#166534'; }}
-                  title="Download Compiled XSLT File"
-                >
-                  <Download size={14} /> Export .xslt
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <select
+                    value={exportFormat}
+                    onChange={(e) => setExportFormat(e.target.value)}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: '12px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      outline: 'none',
+                      backgroundColor: '#fff',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="xslt">Format: .xslt</option>
+                    <option value="xml">Format: .xml</option>
+                    <option value="txt">Format: .txt</option>
+                  </select>
+                  <button 
+                    onClick={handleExportXSLT} 
+                    style={{ backgroundColor: '#f0fdf4', border: '1px solid #22c55e', color: '#166534', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#22c55e'; e.currentTarget.style.color = '#fff'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#f0fdf4'; e.currentTarget.style.color = '#166534'; }}
+                    title="Download Compiled XSLT File"
+                  >
+                    <Download size={14} /> Export
+                  </button>
+                </div>
               )}
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 0, margin: 0, backgroundColor: '#0f172a', color: '#38bdf8' }}>
@@ -394,7 +474,18 @@ const Dashboard = () => {
             </div>
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px' }}>Execution Trace Lineage</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 600, margin: 0 }}>Execution Trace Lineage</h3>
+                <button
+                  onClick={handleExportReport}
+                  style={{ backgroundColor: '#fff8e7', border: '1px solid #e2a03f', color: '#b2771f', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                  onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#e2a03f'; e.currentTarget.style.color = '#fff'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#fff8e7'; e.currentTarget.style.color = '#b2771f'; }}
+                  title="Download Validation Report"
+                >
+                  <Download size={14} /> Export Report
+                </button>
+              </div>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>

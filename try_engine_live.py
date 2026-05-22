@@ -9,7 +9,7 @@ from engine.executor.validator import execute_xslt
 def live_demo():
     print("Initializing Live ComplyOS Engine (Loading NLP models)...")
     parser = NLPRuleParser()
-    test_invoices = glob.glob("xml_invoices_test/*.xml")
+    test_invoices = glob.glob("data/xml_invoices_test/*.xml")
     
     print("\n" + "="*60)
     print("⚡ COMPLYOS LIVE END-TO-END ENGINE ⚡")

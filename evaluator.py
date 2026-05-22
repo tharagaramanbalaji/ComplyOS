@@ -7,14 +7,14 @@ from engine.executor.validator import execute_xslt
 def run_evaluation():
     print("Loading rules and labels...")
     # Load the JSON IR mappings
-    with open("rule_mappings_train.json", "r") as f:
+    with open("data/rule_mappings_train.json", "r") as f:
         rules = json.load(f)
         
     # Load the Ground Truth validation matrix
-    with open("validation_labels_train.json", "r") as f:
+    with open("data/validation_labels_train.json", "r") as f:
         ground_truth = json.load(f)
         
-    xml_files = glob.glob("xml_invoices_train/*.xml")
+    xml_files = glob.glob("data/xml_invoices_train/*.xml")
     total_checks = 0
     correct_checks = 0
     
