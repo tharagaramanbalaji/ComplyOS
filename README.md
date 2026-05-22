@@ -1,3 +1,12 @@
+---
+title: ComplyOS
+emoji: 🏛️
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+---
+
 # 🏛️ ComplyOS: Natural Language Rule Engine for XML Invoice Validation
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
@@ -9,7 +18,7 @@ ComplyOS is an enterprise-grade validation engine that converts plain English co
 
 ---
 
-## 📖 Overview
+## 📖 Overview (Deployed on Hugging Face Spaces)
 
 Tax-compliant e-invoicing systems rely on strict XML validation. Today, validation rules are written as code-heavy XSLT, creating an engineering bottleneck whenever compliance requirements change. 
 

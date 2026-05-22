@@ -108,12 +108,19 @@ async def magic_validation(
 from api.schemas.api_schemas import ChatTurnRequest, ChatTurnResponse
 from nlp.conversational_agent import ConversationalCopilot
 
-COPILOT = ConversationalCopilot()
+_COPILOT = None
+
+def get_copilot():
+    global _COPILOT
+    if _COPILOT is None:
+        _COPILOT = ConversationalCopilot()
+    return _COPILOT
 
 @router.post("/chat/turn", response_model=ChatTurnResponse)
 async def chat_turn(request: ChatTurnRequest):
     try:
-        res = COPILOT.process_turn(
+        copilot = get_copilot()
+        res = copilot.process_turn(
             session_id=request.session_id,
             user_message=request.user_message,
             user_choice=request.user_choice,
