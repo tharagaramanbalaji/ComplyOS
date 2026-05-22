@@ -9,10 +9,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CRITICAL: This allows our React Frontend (Phase 5) to communicate with this API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allow all ports for local development
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

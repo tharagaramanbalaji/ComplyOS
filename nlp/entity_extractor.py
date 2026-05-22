@@ -14,14 +14,16 @@ def extract_operator(text: str) -> str:
     Exhaustive deterministic mapping of mathematical and natural language comparison operators.
     Covers standard symbols, financial terminology, and logical bounds.
     """
-    text = f" {text.lower()} "
+    # Clean punctuation to ensure space boundary matching works correctly
+    cleaned = re.sub(r"[.!?,\(\)\[\]\{\}\"']", " ", text.lower())
+    text = f" {cleaned} "
     
     # 1. Inequality / Strict Bounds
     if any(p in text for p in [" not equal ", " != ", " differs from ", " cannot equal "]):
         return "!="
-    elif any(p in text for p in [" greater than or equal ", " >= ", " at least ", " minimum ", " not less than "]):
+    elif any(p in text for p in [" greater than or equal ", " >= ", " at least ", " minimum ", " not less than ", " non-negative ", " non negative "]):
         return ">="
-    elif any(p in text for p in [" less than or equal ", " <= ", " at most ", " maximum ", " not greater than ", " up to "]):
+    elif any(p in text for p in [" less than or equal ", " <= ", " at most ", " maximum ", " not greater than ", " up to ", " cannot exceed ", " must not exceed ", " not exceed "]):
         return "<="
     elif any(p in text for p in [" greater than ", " > ", " over ", " exceeds ", " higher than ", " more than "]):
         return ">"
@@ -40,9 +42,13 @@ def extract_operator(text: str) -> str:
 
 def parse_financial_number(token_text: str) -> float:
     """
-    Robust financial number parser handling currency symbols, comma separators, and scale suffixes (k, m).
+    Robust financial number parser handling currency symbols, comma separators, scale suffixes (k, m),
+    and written numbers like 'zero'.
     """
-    clean = re.sub(r"[€$£¥,\s]", "", token_text.lower())
+    clean_text = token_text.lower().strip()
+    if clean_text == "zero":
+        return 0.0
+    clean = re.sub(r"[€$£¥,\s]", "", clean_text)
     if clean.endswith("k"):
         try: return float(clean[:-1]) * 1000.0
         except ValueError: pass
@@ -79,8 +85,8 @@ def extract_grammar_entities(rule_text: str) -> dict:
             extracted["subjects"].append(clean_subj.lower())
             
     # 2. Robust Financial Number Extraction
-    # Scan raw regex first for formatted currency strings like "$500,000.00" or "50k"
-    matches = re.findall(r"\b\d+(?:,\d{3})*(?:\.\d+)?(?:[kmKM])?\b", rule_text)
+    # Scan raw regex first for formatted currency strings like "$500,000.00" or "50k" or "zero"
+    matches = re.findall(r"\b(?:\d+(?:,\d{3})*(?:\.\d+)?(?:[kmKM])?|zero)\b", rule_text, re.IGNORECASE)
     for m in matches:
         val = parse_financial_number(m)
         if val is not None and val not in extracted["numbers"]:
@@ -90,10 +96,9 @@ def extract_grammar_entities(rule_text: str) -> dict:
     if not extracted["numbers"]:
         for token in doc:
             if token.like_num:
-                try:
-                    num = float(token.text)
-                    if num not in extracted["numbers"]: extracted["numbers"].append(num)
-                except ValueError: pass
+                val = parse_financial_number(token.text)
+                if val is not None and val not in extracted["numbers"]:
+                    extracted["numbers"].append(val)
 
     # 3. Comprehensive Domain Intent Mapping
     if "if" in lower_text and any(w in lower_text for w in ["then", "must", "required"]):
