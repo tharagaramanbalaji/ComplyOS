@@ -1,11 +1,11 @@
 import React from 'react';
-import { LayoutDashboard, FileText, CheckCircle, Database, BarChart, BookOpen, Settings } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 
-const Sidebar = () => {
+const Sidebar = ({ onLogoClick }) => {
   return (
     <div className="sidebar">
-      <div className="logo">
-        <CheckCircle size={24} color="#2563eb" />
+      <div className="logo" onClick={onLogoClick} style={{ cursor: 'pointer' }}>
+        <CheckCircle size={24} color="#2563eb" className="logo-icon" />
         ComplyOS
       </div>
       <div className="nav-menu">
