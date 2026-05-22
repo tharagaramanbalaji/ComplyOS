@@ -27,14 +27,6 @@ const LandingPage = ({ onStart }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <motion.div 
-            className="hero-badge"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-          >
-            <span className="sparkle">✨</span> NLP-Powered XSLT Validation Engine
-          </motion.div>
 
           <h1 className="hero-title">
             Validate E-Invoices with <span className="gradient-text">Natural Language</span>
